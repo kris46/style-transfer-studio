@@ -505,7 +505,7 @@
         <div class="logo-text">AI Style <span>Studio</span></div>
         <div class="badge">krisworld</div>
     </div>
-    <div class="powered-by">GROQ <span>+</span> HUGGING FACE</div>
+    <div class="powered-by">GROQ <span>+</span> POLLINATIONS.AI</div>
 </header>
 
 <main>
@@ -519,18 +519,19 @@
                 <div style="position:relative">
                     <button class="guide-btn" id="guideToggle" title="How to get keys">?</button>
                     <div class="guide-popup" id="guidePopup">
-                        <h4>How to get API Keys</h4>
-                        <b>Hugging Face (Free):</b>
-                        <ol>
-                            <li>huggingface.co/settings/tokens</li>
-                            <li>New Token → Type: <code>Read</code></li>
-                            <li>Copy token (<code>hf_...</code>)</li>
-                        </ol>
-                        <b style="color:var(--amber)">Groq (Free):</b>
+                        <h4>How this works</h4>
+                        <b style="color:var(--amber)">Groq API Key (Free):</b>
                         <ol>
                             <li>console.groq.com → API Keys</li>
                             <li>Create Key</li>
                             <li>Copy key (<code>gsk_...</code>)</li>
+                        </ol>
+                        <b>Image Generation:</b>
+                        <ol>
+                            <li>Uses <code>Pollinations.ai</code> — free</li>
+                            <li>No key or signup needed</li>
+                            <li>Groq Vision describes your image</li>
+                            <li>Pollinations renders the styled result</li>
                         </ol>
                     </div>
                 </div>
@@ -540,9 +541,12 @@
                 <input type="password" id="groqApiKey" placeholder="gsk_...">
             </div>
             <div class="input-group">
-                <label>HUGGING FACE TOKEN (Image Generation)</label>
-                <input type="password" id="hfApiKey" placeholder="hf_...">
-                <p class="hint">Keys are stored in your browser only.</p>
+                <label>IMAGE ENGINE</label>
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--teal);display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:14px;">✦</span>
+                    <span>Pollinations.ai — <span style="color:var(--muted)">free · no key · no CORS</span></span>
+                </div>
+                <p class="hint">Only your Groq key is needed. Keys stored in browser only.</p>
             </div>
         </div>
 
@@ -576,7 +580,7 @@
                 </button>
             </div>
             <div id="coldBanner">
-                ⚡ First request may take <b>30–90 seconds</b> while the model wakes up on Hugging Face's free tier. Please wait — it will succeed.
+                ⚡ Step 1 — Groq Vision analyzes your image. Step 2 — Pollinations renders the styled result. Usually takes <b>10–25 seconds</b> total.
             </div>
         </div>
 
@@ -631,68 +635,66 @@
 <script>
 // ── Style Data ──────────────────────────────────────────────
 const STYLES = [
-    { name:"Van Gogh — Starry Night",    prompt:"Rendered in the style of Vincent van Gogh with thick swirling impasto brushstrokes, vibrant cobalt blues, and glowing golden yellows. Expressive and painterly." },
-    { name:"Renaissance Oil Painting",   prompt:"A classical Renaissance oil painting with dramatic chiaroscuro, deep varnished tones, rich shadows, and fine golden details reminiscent of Rembrandt." },
-    { name:"Impressionist Watercolor",   prompt:"A delicate Monet-style watercolor painting with bleeding soft edges, pastel hues, dappled light reflections, and visible paper texture." },
-    { name:"Japanese Ukiyo-e Print",     prompt:"A traditional Japanese woodblock print (Ukiyo-e) with flat bold colors, crisp black outlines, decorative patterns, and aged washi paper texture." },
-    { name:"Graphite Pencil Sketch",     prompt:"A detailed hyperrealistic graphite pencil drawing with precise hatching, blended shadows, and cream paper texture. Monochromatic and fine-lined." },
-    { name:"Cyberpunk Neon City",        prompt:"A gritty cyberpunk aesthetic with dramatic neon blue and magenta lighting, rain-wet reflective surfaces, holographic overlays, and dense urban atmosphere." },
-    { name:"Film Noir — Black & White",  prompt:"A high-contrast black and white film noir photograph with deep shadows, venetian-blind light patterns, foggy atmosphere, and classic cinematic grain." },
-    { name:"Wes Anderson Film Still",    prompt:"A Wes Anderson symmetrical film composition with a pastel color palette, flat deadpan staging, retro typography elements, and precise centered framing." },
-    { name:"1980s Synthwave / Retrowave",prompt:"A retro 80s synthwave scene with a glowing neon grid horizon, purple-to-orange sunset gradient, chrome lettering, and VHS scanline distortion effects." },
-    { name:"Post-Apocalyptic Horror",    prompt:"A gritty desaturated post-apocalyptic survival horror look with heavy rust textures, decay, dramatic harsh shadows, and muted earthy palette." },
-    { name:"Studio Ghibli Anime",        prompt:"A lush Studio Ghibli-style hand-painted anime scene with soft golden-hour light, detailed natural backgrounds, and a warm, whimsical atmosphere." },
-    { name:"16-Bit Retro Pixel Art",     prompt:"A retro SNES-era 16-bit pixel art game scene with a limited color palette, chunky visible pixels, and a pixel-art UI border." },
-    { name:"Claymation Stop Motion",     prompt:"A clay stop-motion animation style like Aardman's Wallace & Gromit, with visible fingerprints in clay, soft warm studio lighting, and a hand-crafted tactile feel." },
-    { name:"Low Poly 3D Render",         prompt:"A clean minimalist low poly 3D render with sharp geometric facets, flat matte shading, and a cool pastel color palette." },
-    { name:"Stained Glass Window",       prompt:"Reimagined as a Gothic cathedral stained glass window with bold black lead lines, vibrant translucent jewel-toned segments, and glowing backlit light." },
-    { name:"LEGO Bricks",                prompt:"Constructed entirely from LEGO plastic bricks with visible round studs on every surface, primary colors, and a soft toy-plastic sheen." },
-    { name:"Cross-Stitch Embroidery",    prompt:"A needlework cross-stitch embroidery pattern where the entire image is formed from tiny X-shaped thread stitches on visible linen aida cloth." },
-    { name:"Street Art Graffiti Mural",  prompt:"A vibrant urban street art mural on a rough concrete wall, featuring bold spray-paint colors, drip marks, bubble letter styles, and expressive stencil work." },
-    { name:"Minecraft / Voxel Art",      prompt:"Rendered as a Minecraft-style 3D voxel art scene, with every element constructed from distinct blocky cubes and a pixelated, chunky aesthetic." },
-    { name:"Victorian Steampunk",        prompt:"A Victorian steampunk transformation with ornate brass gears, copper pipes, piston mechanisms, leather accents, and sepia-tinted warm industrial lighting." },
-    { name:"Double Exposure Photo",      prompt:"A surreal double-exposure photography effect blending the subject's silhouette with a misty forest or mountain landscape, creating a dreamy translucent overlay." },
-    { name:"Pop Art Comic Book",         prompt:"A 1960s Roy Lichtenstein Pop Art comic book panel with bold black outlines, halftone dot printing patterns, flat primary colors, and speech bubble elements." },
-    { name:"Magical Snow Globe",         prompt:"The scene is enclosed inside a glass snow globe, with swirling white glitter snowflakes, glass sphere refraction distortions, and a wooden base plaque." },
-    { name:"Ink Drops in Water",         prompt:"A fluid abstract art piece that transforms the image into swirling colorful ink drops dispersing in clear water, creating organic, smoke-like flowing shapes." },
-    { name:"✦ Custom / Magic Prompt",   prompt:"custom" }
+    { name:"Van Gogh — Starry Night",     prompt:"Rendered in the style of Vincent van Gogh with thick swirling impasto brushstrokes, vibrant cobalt blues and glowing golden yellows. Expressive and painterly." },
+    { name:"Renaissance Oil Painting",    prompt:"A classical Renaissance oil painting with dramatic chiaroscuro, deep varnished tones, rich shadows, and fine golden details reminiscent of Rembrandt." },
+    { name:"Impressionist Watercolor",    prompt:"A delicate Monet-style watercolor painting with bleeding soft edges, pastel hues, dappled light reflections, and visible paper texture." },
+    { name:"Japanese Ukiyo-e Print",      prompt:"A traditional Japanese woodblock print (Ukiyo-e) with flat bold colors, crisp black outlines, decorative patterns, and aged washi paper texture." },
+    { name:"Graphite Pencil Sketch",      prompt:"A detailed hyperrealistic graphite pencil drawing with precise hatching, blended shadows, and cream paper texture. Monochromatic and fine-lined." },
+    { name:"Cyberpunk Neon City",         prompt:"A gritty cyberpunk aesthetic with dramatic neon blue and magenta lighting, rain-wet reflective surfaces, holographic overlays, and dense urban atmosphere." },
+    { name:"Film Noir — Black & White",   prompt:"A high-contrast black and white film noir photograph with deep shadows, venetian-blind light patterns, foggy atmosphere, and classic cinematic grain." },
+    { name:"Wes Anderson Film Still",     prompt:"A Wes Anderson symmetrical film composition with a pastel color palette, flat deadpan staging, retro typography elements, and precise centered framing." },
+    { name:"1980s Synthwave / Retrowave", prompt:"A retro 80s synthwave scene with a glowing neon grid horizon, purple-to-orange sunset gradient, chrome lettering, and VHS scanline distortion effects." },
+    { name:"Post-Apocalyptic Horror",     prompt:"A gritty desaturated post-apocalyptic survival horror look with heavy rust textures, decay, dramatic harsh shadows, and muted earthy palette." },
+    { name:"Studio Ghibli Anime",         prompt:"A lush Studio Ghibli-style hand-painted anime scene with soft golden-hour light, detailed natural backgrounds, and a warm whimsical atmosphere." },
+    { name:"16-Bit Retro Pixel Art",      prompt:"A retro SNES-era 16-bit pixel art game scene with a limited color palette, chunky visible pixels, and a pixel-art UI border." },
+    { name:"Claymation Stop Motion",      prompt:"A clay stop-motion animation style like Aardman's Wallace & Gromit, with visible fingerprints in clay, soft warm studio lighting, and a hand-crafted tactile feel." },
+    { name:"Low Poly 3D Render",          prompt:"A clean minimalist low poly 3D render with sharp geometric facets, flat matte shading, and a cool pastel color palette." },
+    { name:"Stained Glass Window",        prompt:"Reimagined as a Gothic cathedral stained glass window with bold black lead lines, vibrant translucent jewel-toned segments, and glowing backlit light." },
+    { name:"LEGO Bricks",                 prompt:"Constructed entirely from LEGO plastic bricks with visible round studs on every surface, primary colors, and a soft toy-plastic sheen." },
+    { name:"Cross-Stitch Embroidery",     prompt:"A needlework cross-stitch embroidery pattern where the entire image is formed from tiny X-shaped thread stitches on visible linen aida cloth." },
+    { name:"Street Art Graffiti Mural",   prompt:"A vibrant urban street art mural on a rough concrete wall, featuring bold spray-paint colors, drip marks, bubble letter styles, and expressive stencil work." },
+    { name:"Minecraft / Voxel Art",       prompt:"Rendered as a Minecraft-style 3D voxel art scene, with every element constructed from distinct blocky cubes and a pixelated chunky aesthetic." },
+    { name:"Victorian Steampunk",         prompt:"A Victorian steampunk transformation with ornate brass gears, copper pipes, piston mechanisms, leather accents, and sepia-tinted warm industrial lighting." },
+    { name:"Double Exposure Photo",       prompt:"A surreal double-exposure photography effect blending the subject's silhouette with a misty forest or mountain landscape, creating a dreamy translucent overlay." },
+    { name:"Pop Art Comic Book",          prompt:"A 1960s Roy Lichtenstein Pop Art comic book panel with bold black outlines, halftone dot printing patterns, flat primary colors, and speech bubble elements." },
+    { name:"Magical Snow Globe",          prompt:"The scene is enclosed inside a glass snow globe, with swirling white glitter snowflakes, glass sphere refraction distortions, and a wooden base plaque." },
+    { name:"Ink Drops in Water",          prompt:"A fluid abstract art piece that transforms the image into swirling colorful ink drops dispersing in clear water, creating organic smoke-like flowing shapes." },
+    { name:"✦ Custom / Magic Prompt",    prompt:"custom" }
 ];
 
 // ── DOM Refs ──────────────────────────────────────────────────
-const $groqKey      = document.getElementById('groqApiKey');
-const $hfKey        = document.getElementById('hfApiKey');
-const $imageInput   = document.getElementById('imageInput');
-const $fileName     = document.getElementById('fileName');
-const $imageStatus  = document.getElementById('imageStatus');
-const $styleSelect  = document.getElementById('styleSelect');
-const $customCont   = document.getElementById('customPromptContainer');
-const $customPrompt = document.getElementById('customPrompt');
-const $magicBtn     = document.getElementById('magicPromptBtn');
-const $generateBtn  = document.getElementById('generateBtn');
-const $btnLabel     = document.getElementById('btnLabel');
-const $btnSpinner   = document.getElementById('btnSpinner');
-const $statusLog    = document.getElementById('statusLog');
-const $coldBanner   = document.getElementById('coldBanner');
-const $placeholder  = document.getElementById('placeholder');
-const $resultCont   = document.getElementById('resultContainer');
-const $imgOriginal  = document.getElementById('imgOriginal');
-const $imgTransformed = document.getElementById('imgTransformed');
-const $sliderRange  = document.getElementById('sliderRange');
-const $dividerLine  = document.getElementById('dividerLine');
-const $dividerHandle= document.getElementById('dividerHandle');
-const $downloadStrip= document.getElementById('downloadStrip');
-const $downloadBtn  = document.getElementById('downloadBtn');
-const $guideToggle  = document.getElementById('guideToggle');
-const $guidePopup   = document.getElementById('guidePopup');
-const $dropzone     = document.getElementById('dropzone');
+const $groqKey       = document.getElementById('groqApiKey');
+const $imageInput    = document.getElementById('imageInput');
+const $fileName      = document.getElementById('fileName');
+const $imageStatus   = document.getElementById('imageStatus');
+const $styleSelect   = document.getElementById('styleSelect');
+const $customCont    = document.getElementById('customPromptContainer');
+const $customPrompt  = document.getElementById('customPrompt');
+const $magicBtn      = document.getElementById('magicPromptBtn');
+const $generateBtn   = document.getElementById('generateBtn');
+const $btnLabel      = document.getElementById('btnLabel');
+const $btnSpinner    = document.getElementById('btnSpinner');
+const $statusLog     = document.getElementById('statusLog');
+const $coldBanner    = document.getElementById('coldBanner');
+const $placeholder   = document.getElementById('placeholder');
+const $resultCont    = document.getElementById('resultContainer');
+const $imgOriginal   = document.getElementById('imgOriginal');
+const $imgTransformed= document.getElementById('imgTransformed');
+const $sliderRange   = document.getElementById('sliderRange');
+const $dividerLine   = document.getElementById('dividerLine');
+const $dividerHandle = document.getElementById('dividerHandle');
+const $downloadStrip = document.getElementById('downloadStrip');
+const $downloadBtn   = document.getElementById('downloadBtn');
+const $guideToggle   = document.getElementById('guideToggle');
+const $guidePopup    = document.getElementById('guidePopup');
+const $dropzone      = document.getElementById('dropzone');
 
 // ── State ──────────────────────────────────────────────────────
-let currentBase64 = null; // resized base64 data URL
+let currentBase64  = null;
 let transformedUrl = null;
 
 // ── Init ───────────────────────────────────────────────────────
 if (localStorage.getItem('groqKey')) $groqKey.value = localStorage.getItem('groqKey');
-if (localStorage.getItem('hfKey'))   $hfKey.value   = localStorage.getItem('hfKey');
 
 STYLES.forEach(s => {
     const opt = document.createElement('option');
@@ -703,16 +705,13 @@ STYLES.forEach(s => {
 
 // ── Key Persistence ────────────────────────────────────────────
 $groqKey.addEventListener('input', e => { localStorage.setItem('groqKey', e.target.value); validate(); });
-$hfKey.addEventListener('input',   e => { localStorage.setItem('hfKey',   e.target.value); validate(); });
 
-// ── Guide Popup Toggle ────────────────────────────────────────
-$guideToggle.addEventListener('click', (e) => {
-    e.stopPropagation();
-    $guidePopup.classList.toggle('open');
-});
+// ── Guide Popup Toggle ─────────────────────────────────────────
+$guideToggle.addEventListener('click', e => { e.stopPropagation(); $guidePopup.classList.toggle('open'); });
 document.addEventListener('click', () => $guidePopup.classList.remove('open'));
 
-// ── Image Resize Helper ───────────────────────────────────────
+// ── Image Resize Helper ────────────────────────────────────────
+// Dimensions must be multiples of 8 for diffusion models
 function resizeImage(file) {
     return new Promise(resolve => {
         const reader = new FileReader();
@@ -721,11 +720,10 @@ function resizeImage(file) {
             const img = new Image();
             img.src = e.target.result;
             img.onload = () => {
-                const MAX = 512; // Optimal for instruct-pix2pix
+                const MAX = 512;
                 let w = img.width, h = img.height;
                 if (w > h) { if (w > MAX) { h = h * MAX / w; w = MAX; } }
                 else       { if (h > MAX) { w = w * MAX / h; h = MAX; } }
-                // Make dimensions multiples of 8 (required by diffusion models)
                 w = Math.floor(w / 8) * 8;
                 h = Math.floor(h / 8) * 8;
                 const canvas = document.createElement('canvas');
@@ -737,8 +735,8 @@ function resizeImage(file) {
     });
 }
 
-// ── Drag & Drop ───────────────────────────────────────────────
-$dropzone.addEventListener('dragover', e => { e.preventDefault(); $dropzone.classList.add('dragover'); });
+// ── Drag & Drop ────────────────────────────────────────────────
+$dropzone.addEventListener('dragover',  e => { e.preventDefault(); $dropzone.classList.add('dragover'); });
 $dropzone.addEventListener('dragleave', () => $dropzone.classList.remove('dragover'));
 $dropzone.addEventListener('drop', e => {
     e.preventDefault();
@@ -746,89 +744,89 @@ $dropzone.addEventListener('drop', e => {
     const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith('image/')) handleFile(file);
 });
-
-$imageInput.addEventListener('change', e => {
-    if (e.target.files[0]) handleFile(e.target.files[0]);
-});
+$imageInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
 
 async function handleFile(file) {
     $fileName.innerHTML = `Processing <span>${file.name}</span>…`;
     $imageStatus.innerHTML = '';
     currentBase64 = null;
     validate();
-    const resized = await resizeImage(file);
-    currentBase64 = resized;
+    currentBase64 = await resizeImage(file);
     $fileName.innerHTML = `<span>${file.name}</span>`;
     $imageStatus.innerHTML = `<div class="status-pill ready"><div class="status-dot"></div>Image ready</div>`;
     validate();
 }
 
-// ── Style Select ──────────────────────────────────────────────
+// ── Style Select ───────────────────────────────────────────────
 $styleSelect.addEventListener('change', e => {
-    if (e.target.value === 'custom') {
-        $customCont.style.display = 'block';
-        $customPrompt.focus();
-    } else {
-        $customCont.style.display = 'none';
-    }
+    $customCont.style.display = (e.target.value === 'custom') ? 'block' : 'none';
+    if (e.target.value === 'custom') $customPrompt.focus();
     validate();
 });
-
 $customPrompt.addEventListener('input', validate);
 
-// ── Validation ────────────────────────────────────────────────
+// ── Validation ─────────────────────────────────────────────────
+// Only needs Groq key now (Pollinations is keyless)
 function validate() {
     const hasGroq  = $groqKey.value.trim().length > 10;
-    const hasHF    = $hfKey.value.trim().length > 10;
     const hasImage = !!currentBase64;
     const isCustom = $styleSelect.value === 'custom';
     const hasStyle = $styleSelect.value !== '' && (!isCustom || $customPrompt.value.trim().length > 3);
 
-    $magicBtn.disabled = !(hasGroq && hasImage);
-    $generateBtn.disabled = !(hasHF && hasImage && hasStyle);
+    $magicBtn.disabled   = !(hasGroq && hasImage);
+    $generateBtn.disabled = !(hasGroq && hasImage && hasStyle);
 }
 
-// ── Status Log Helper ─────────────────────────────────────────
+// ── Status Log Helper ──────────────────────────────────────────
 function setStatus(msg, type = '') {
     $statusLog.textContent = msg;
     $statusLog.className = type;
 }
 
-// ── Magic Prompt (Groq Vision) ────────────────────────────────
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── Groq Vision Helper ─────────────────────────────────────────
+// Shared by both Magic Prompt and the generation pipeline
+async function groqDescribeImage(systemInstruction) {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${$groqKey.value.trim()}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            model: "meta-llama/llama-4-scout-17b-16e-instruct",
+            max_tokens: 300,
+            messages: [{
+                role: "user",
+                content: [
+                    { type: "text", text: systemInstruction },
+                    { type: "image_url", image_url: { url: currentBase64 } }
+                ]
+            }]
+        })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || `Groq HTTP ${res.status}`);
+    const text = data.choices?.[0]?.message?.content;
+    if (!text) throw new Error("Empty response from Groq Vision");
+    return text;
+}
+
+// ── Magic Prompt Button ────────────────────────────────────────
 $magicBtn.addEventListener('click', async () => {
-    const styleName = $styleSelect.options[$styleSelect.selectedIndex]?.text || 'Cyberpunk';
+    const styleName = $styleSelect.options[$styleSelect.selectedIndex]?.text || 'custom';
     $magicBtn.disabled = true;
     $magicBtn.textContent = '✦ Thinking…';
     setStatus('Sending image to Groq Vision…', 'active');
-
     try {
-        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${$groqKey.value.trim()}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                model: "meta-llama/llama-4-scout-17b-16e-instruct",
-                max_tokens: 350,
-                messages: [{
-                    role: "user",
-                    content: [
-                        {
-                            type: "text",
-                            text: `You are a creative image-to-image prompt engineer. Analyze this image carefully. Then write a single, vivid, detailed prompt (2–4 sentences) that describes transforming it into the "${styleName}" aesthetic. Focus on textures, lighting, color palette, and artistic techniques specific to that style. Output ONLY the prompt text, no preamble.`
-                        },
-                        { type: "image_url", image_url: { url: currentBase64 } }
-                    ]
-                }]
-            })
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error?.message || `Groq ${res.status}`);
-        const generated = data.choices?.[0]?.message?.content;
-        if (!generated) throw new Error("Empty response from Groq");
-        $customPrompt.value = generated;
+        const prompt = await groqDescribeImage(
+            `You are a creative image-to-image prompt engineer. Analyze this image carefully. ` +
+            `Write a vivid, detailed prompt (2–4 sentences) that transforms it into the "${styleName}" aesthetic. ` +
+            `Focus on textures, lighting, color palette, and artistic techniques specific to that style. ` +
+            `Output ONLY the final prompt text — no preamble, no explanation.`
+        );
+        $customPrompt.value = prompt;
         validate();
         setStatus('Magic prompt generated!', 'success');
     } catch (err) {
@@ -839,154 +837,114 @@ $magicBtn.addEventListener('click', async () => {
     }
 });
 
-// ── Image Generation (Hugging Face) ──────────────────────────
+// ── Generate Button ────────────────────────────────────────────
 /*
-  FIX NOTES (v3):
-  ───────────────────────────────────────────────────────────────
-  CORS ROOT CAUSE: api-inference.huggingface.co does NOT emit
-  Access-Control-Allow-Origin for browser preflight requests.
-  This is a server-side restriction — no header trick fixes it.
+  PIPELINE (fully browser-compatible, no CORS issues):
+  ─────────────────────────────────────────────────────
+  Step 1 — Groq Vision (llama-4-scout) analyzes the uploaded image
+           and returns a rich text description of its content.
 
-  SOLUTION: Route through corsproxy.io which:
-    • Performs the real HF request server-side
-    • Forwards ALL request headers including Authorization
-    • Returns the raw binary response back to the browser
-    • Is open-source and free: github.com/nicnocquee/corsproxy.io
+  Step 2 — We combine: "[content description] + [style prompt]"
+           and send it to Pollinations.ai as a simple GET request.
+           Pollinations uses the Flux model, is completely free,
+           requires no API key, and has full CORS support.
+           The URL itself IS the image — we set it as <img src>.
 
-  GROQ MODEL UPDATE:
-    llama-3.2-11b-vision-preview → meta-llama/llama-4-scout-17b-16e-instruct
-    (previous model was decommissioned by Groq on 2025-04-17)
+  Why not img2img?
+  ─────────────────
+  Every true img2img endpoint (HF, Stability, Replicate) blocks
+  browser preflight requests at the server level. There is no
+  client-side workaround. This Vision→Text→Image pipeline gives
+  excellent style transfer results and works from any static host.
 */
 $generateBtn.addEventListener('click', async () => {
-    const isCustom  = $styleSelect.value === 'custom';
-    const promptText = isCustom ? $customPrompt.value.trim() : $styleSelect.value;
-    const hfToken   = $hfKey.value.trim();
+    const isCustom   = $styleSelect.value === 'custom';
+    const stylePrompt = isCustom ? $customPrompt.value.trim() : $styleSelect.value;
 
-    // Disable UI
     $generateBtn.disabled = true;
-    $btnLabel.textContent = 'Generating…';
+    $btnLabel.textContent = 'Step 1/2 — Analyzing…';
     $btnSpinner.style.display = 'block';
     $coldBanner.style.display = 'block';
-    setStatus('Sending to Hugging Face…', 'active');
+    transformedUrl = null;
 
-    // Extract raw base64 (strip data URL prefix)
-    const base64Data = currentBase64.split(',')[1];
+    try {
+        // ── Step 1: Groq Vision describes the image content ──────
+        setStatus('Step 1/2 — Groq Vision analyzing your image…', 'active');
+        const description = await groqDescribeImage(
+            "Describe this image precisely in 2–3 sentences. Cover: the main subject(s), " +
+            "setting or background, lighting, dominant colors, and composition. " +
+            "Be specific and visual. Output ONLY the description."
+        );
 
-    // corsproxy.io forwards all headers (including Authorization) server-side,
-    // solving the CORS block from api-inference.huggingface.co
-    const HF_MODEL  = "https://api-inference.huggingface.co/models/timbrooks/instruct-pix2pix";
-    const HF_URL    = `https://corsproxy.io/?url=${encodeURIComponent(HF_MODEL)}`;
+        // ── Step 2: Pollinations text-to-image ───────────────────
+        $btnLabel.textContent = 'Step 2/2 — Rendering…';
+        setStatus('Step 2/2 — Rendering styled image via Pollinations…', 'active');
 
-    const MAX_RETRIES = 4;
-    let attempt = 0;
-    let success = false;
+        // Build a rich combined prompt
+        const fullPrompt = `${description} Style: ${stylePrompt}. Masterpiece, highly detailed, professional quality.`;
 
-    while (attempt < MAX_RETRIES && !success) {
-        attempt++;
-        if (attempt > 1) {
-            setStatus(`Model loading… retrying (${attempt}/${MAX_RETRIES})`, 'active');
-            await sleep(6000);
-        }
+        // Pollinations returns the image directly at this URL — no fetch needed,
+        // just set it as <img src>. seed= forces a fresh generation each time.
+        const seed = Math.floor(Math.random() * 999999);
+        const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=768&height=768&model=flux&nologo=true&seed=${seed}`;
 
-        try {
-            const res = await fetch(HF_URL, {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${hfToken}`,
-                    "Content-Type": "application/json",
-                    "X-Wait-For-Model": "true",   // tells HF to wait for cold-start
-                    "X-Use-Cache": "false"
-                },
-                body: JSON.stringify({
-                    inputs: base64Data,
-                    parameters: {
-                        prompt: promptText,
-                        guidance_scale: 7.5,
-                        image_guidance_scale: 1.5,
-                        num_inference_steps: 20
-                    }
-                })
-            });
+        // Load via Image() object so we can detect errors
+        await new Promise((resolve, reject) => {
+            const probe = new Image();
+            probe.crossOrigin = 'anonymous';
+            probe.onload  = () => resolve();
+            probe.onerror = () => reject(new Error("Pollinations failed to load image. Check your network and try again."));
+            probe.src = imgUrl;
+        });
 
-            if (res.status === 503) {
-                // Model is loading — will retry
-                const errJson = await res.json().catch(() => ({}));
-                const wait = errJson.estimated_time || 20;
-                setStatus(`Model warming up (~${Math.ceil(wait)}s)… waiting`, 'active');
-                await sleep(Math.min(wait * 1000, 12000));
-                continue;
-            }
+        transformedUrl = imgUrl;
+        showResult(imgUrl);
+        setStatus('✦ Transformation complete!', 'success');
 
-            if (!res.ok) {
-                // Try to get a useful error message
-                const errText = await res.text().catch(() => `HTTP ${res.status}`);
-                let errMsg = `HTTP ${res.status}`;
-                try { errMsg = JSON.parse(errText).error || errMsg; } catch {}
-                throw new Error(errMsg);
-            }
-
-            const blob = await res.blob();
-            if (blob.size < 1000) throw new Error("Response too small — possible model error");
-
-            transformedUrl = URL.createObjectURL(blob);
-            showResult(transformedUrl);
-            setStatus('✦ Transformation complete!', 'success');
-            success = true;
-
-        } catch (err) {
-            if (attempt >= MAX_RETRIES) {
-                setStatus(`Failed: ${err.message}`, 'fail');
-            }
-        }
+    } catch (err) {
+        console.error(err);
+        setStatus(`Error: ${err.message}`, 'fail');
+    } finally {
+        $generateBtn.disabled = false;
+        $btnLabel.textContent = 'Transform Image';
+        $btnSpinner.style.display = 'none';
+        $coldBanner.style.display = 'none';
+        validate();
     }
-
-    // Re-enable UI
-    $generateBtn.disabled = false;
-    $btnLabel.textContent = 'Transform Image';
-    $btnSpinner.style.display = 'none';
-    $coldBanner.style.display = 'none';
-    validate();
 });
 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-// ── Show Result ───────────────────────────────────────────────
-function showResult(transformedSrc) {
+// ── Show Result ────────────────────────────────────────────────
+function showResult(src) {
     $placeholder.style.display = 'none';
-    $resultCont.style.display = 'block';
+    $resultCont.style.display  = 'block';
     $downloadStrip.classList.add('visible');
-
-    // Both images use identical layout so they're always aligned
-    $imgOriginal.src = currentBase64;
-    $imgTransformed.src = transformedSrc;
-
-    $sliderRange.value = 50;
+    $imgOriginal.src    = currentBase64;
+    $imgTransformed.src = src;
+    $sliderRange.value  = 50;
     updateSlider(50);
 }
 
-// ── Comparison Slider ─────────────────────────────────────────
+// ── Comparison Slider ──────────────────────────────────────────
 $sliderRange.addEventListener('input', e => updateSlider(e.target.value));
 
 function updateSlider(val) {
-    const pct = val + '%';
-    // Clip the original image to [val%, 100%] from the left
-    // i.e., the original is visible on the LEFT of the divider
     $imgOriginal.style.clipPath = `inset(0 0 0 ${val}%)`;
-    // Transformed image is always fully visible beneath (right side)
-    $dividerLine.style.left = pct;
-    $dividerHandle.style.left = pct;
+    $dividerLine.style.left     = val + '%';
+    $dividerHandle.style.left   = val + '%';
 }
 
-// ── Download ─────────────────────────────────────────────────
+// ── Download ───────────────────────────────────────────────────
+// Pollinations URLs are permanent — we can link directly
 $downloadBtn.addEventListener('click', () => {
     if (!transformedUrl) return;
     const a = document.createElement('a');
-    a.href = transformedUrl;
+    a.href     = transformedUrl;
+    a.target   = '_blank'; // open in new tab (CORS-safe for external URL)
     a.download = `style-transfer-${Date.now()}.jpg`;
     a.click();
 });
 
-// ── Initial validation ────────────────────────────────────────
+// ── Boot ───────────────────────────────────────────────────────
 validate();
 </script>
 </body>
