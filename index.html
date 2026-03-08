@@ -380,17 +380,24 @@
         });
 
         // --- 6. Hugging Face: Image Generation Logic ---
-
+        
         generateBtn.addEventListener('click', async () => {
             let promptText = styleSelect.value === 'custom' ? customPromptInput.value : styleSelect.value;
-
+        
             generateBtn.disabled = true;
             btnLoader.classList.remove('hidden');
-            generateBtn.querySelector('span').textContent = "Generating (Free Tier)...";
-
+            generateBtn.querySelector('span').textContent = "Generating (Proxy Mode)...";
+        
             try {
-                // Using instruct-pix2pix for style transfer
-                const response = await fetch("https://api-inference.huggingface.co/models/timbrooks/instruct-pix2pix", {
+                // DEFINE THE PROXY AND TARGET URL
+                // We use corsproxy.io to bypass the browser security block
+                const PROXY_URL = "https://corsproxy.io/?";
+                const HF_MODEL_URL = "https://api-inference.huggingface.co/models/timbrooks/instruct-pix2pix";
+                
+                // Combine them
+                const finalUrl = PROXY_URL + encodeURIComponent(HF_MODEL_URL);
+        
+                const response = await fetch(finalUrl, {
                     method: "POST",
                     headers: {
                         "Authorization": `Bearer ${hfKeyInput.value}`,
@@ -398,26 +405,29 @@
                     },
                     body: JSON.stringify({
                         inputs: promptText,
-                        image: currentBase64, // HF expects the full Data URI
-                        // Optional parameters to tweak quality
+                        image: currentBase64,
                         guidance_scale: 7.5,
                         image_guidance_scale: 1.5 
                     })
                 });
-
+        
                 if (!response.ok) {
-                    const err = await response.json();
-                    if (err.error && err.error.includes("loading")) {
+                    const err = await response.json(); // Note: Proxy might return errors differently
+                    // Handle specific proxy errors or HF loading errors
+                    const errorMsg = (err && err.error) ? err.error : "Generation Failed"; 
+                    if (errorMsg.includes("loading")) {
                         throw new Error("Model is cold-starting. Please wait 30s and try again.");
                     }
-                    throw new Error(err.error || "HF Generation Failed");
+                    throw new Error(errorMsg);
                 }
-
+        
+                // The proxy should return the image blob directly
                 const blob = await response.blob();
                 const resultUrl = URL.createObjectURL(blob);
                 showResult(resultUrl);
-
+        
             } catch (error) {
+                console.error(error);
                 alert(`Error: ${error.message}`);
             } finally {
                 generateBtn.disabled = false;
