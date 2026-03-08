@@ -809,7 +809,7 @@ $magicBtn.addEventListener('click', async () => {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "llama-3.2-11b-vision-preview",
+                model: "meta-llama/llama-4-scout-17b-16e-instruct",
                 max_tokens: 350,
                 messages: [{
                     role: "user",
@@ -841,18 +841,21 @@ $magicBtn.addEventListener('click', async () => {
 
 // ── Image Generation (Hugging Face) ──────────────────────────
 /*
-  FIX NOTES vs original code:
-  ────────────────────────────
-  1. REMOVED allorigins proxy — HF Inference API supports CORS natively.
-  2. FIXED payload: instruct-pix2pix expects binary image bytes as the request
-     body, with the prompt passed as a JSON-wrapped "inputs" string plus a
-     separate "parameters" block containing the image as base64.
-     The correct documented format for HF image-to-image inference is:
-       { inputs: base64String, parameters: { prompt, guidance_scale, ... } }
-  3. ADDED X-Wait-For-Model header to handle cold starts gracefully.
-  4. ADDED retry logic (up to 3 retries) for 503 model-loading responses.
-  5. FIXED comparison slider: both images use <img> tags with identical
-     object-fit, so they always align perfectly regardless of aspect ratio.
+  FIX NOTES (v3):
+  ───────────────────────────────────────────────────────────────
+  CORS ROOT CAUSE: api-inference.huggingface.co does NOT emit
+  Access-Control-Allow-Origin for browser preflight requests.
+  This is a server-side restriction — no header trick fixes it.
+
+  SOLUTION: Route through corsproxy.io which:
+    • Performs the real HF request server-side
+    • Forwards ALL request headers including Authorization
+    • Returns the raw binary response back to the browser
+    • Is open-source and free: github.com/nicnocquee/corsproxy.io
+
+  GROQ MODEL UPDATE:
+    llama-3.2-11b-vision-preview → meta-llama/llama-4-scout-17b-16e-instruct
+    (previous model was decommissioned by Groq on 2025-04-17)
 */
 $generateBtn.addEventListener('click', async () => {
     const isCustom  = $styleSelect.value === 'custom';
@@ -869,7 +872,10 @@ $generateBtn.addEventListener('click', async () => {
     // Extract raw base64 (strip data URL prefix)
     const base64Data = currentBase64.split(',')[1];
 
-    const HF_URL = "https://api-inference.huggingface.co/models/timbrooks/instruct-pix2pix";
+    // corsproxy.io forwards all headers (including Authorization) server-side,
+    // solving the CORS block from api-inference.huggingface.co
+    const HF_MODEL  = "https://api-inference.huggingface.co/models/timbrooks/instruct-pix2pix";
+    const HF_URL    = `https://corsproxy.io/?url=${encodeURIComponent(HF_MODEL)}`;
 
     const MAX_RETRIES = 4;
     let attempt = 0;
