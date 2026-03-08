@@ -589,6 +589,7 @@
             <span id="btnLabel">Transform Image</span>
             <div class="spinner" id="btnSpinner" style="display:none;"></div>
         </button>
+        <div id="groqWarn" style="display:none;margin-top:8px;padding:10px 14px;background:rgba(240,165,0,0.07);border:1px solid rgba(240,165,0,0.25);border-radius:8px;font-size:10px;color:#c87a00;line-height:1.6;align-items:flex-start;gap:8px;"><span style="font-size:14px;flex-shrink:0;">⚠</span><span>No Groq key — the generated image <b>won't match your photo</b>. Add a free Groq key above to make results match the subject, pose &amp; framing of your image.</span></div>
         <div id="statusLog"></div>
 
     </div>
@@ -773,10 +774,13 @@ function validate() {
     const isCustom = $styleSelect.value === 'custom';
     const hasStyle = $styleSelect.value !== '' && (!isCustom || $customPrompt.value.trim().length > 3);
 
-    // Magic Prompt requires Groq Vision to read the image
+    // Magic Prompt requires Groq Vision
     $magicBtn.disabled    = !(hasGroq && hasImage);
-    // Generate only needs image + style — Groq is optional
+    // Generate needs image + style (Groq optional but strongly recommended)
     $generateBtn.disabled = !(hasImage && hasStyle);
+    // Show a warning badge when Groq key is missing
+    const $warn = document.getElementById('groqWarn');
+    if ($warn) $warn.style.display = (!hasGroq && hasImage && hasStyle) ? 'flex' : 'none';
 }
 
 // ── Status Log Helper ──────────────────────────────────────────
@@ -798,7 +802,7 @@ async function groqDescribeImage(systemInstruction) {
         },
         body: JSON.stringify({
             model: "meta-llama/llama-4-scout-17b-16e-instruct",
-            max_tokens: 300,
+            max_tokens: 550,
             messages: [{
                 role: "user",
                 content: [
@@ -878,17 +882,26 @@ $generateBtn.addEventListener('click', async () => {
             $btnLabel.textContent = 'Step 1/2 — Analyzing…';
             setStatus('Step 1/2 — Groq Vision analyzing your image…', 'active');
             const description = await groqDescribeImage(
-                "Describe this image precisely in 2–3 sentences. Cover: the main subject(s), " +
-                "setting or background, lighting, dominant colors, and composition. " +
-                "Be specific and visual. Output ONLY the description."
+                "You are an expert at describing images for faithful reconstruction. " +
+                "Analyze this image and output a single dense paragraph covering ALL of the following: " +
+                "(1) SUBJECT: exact appearance — face shape, eye color and expression, skin tone, " +
+                "any distinctive marks, hair color/length/texture/style, age impression; " +
+                "(2) POSE & FRAMING: body position, camera angle, shot type (close-up/bust/full body), " +
+                "what is centered in frame; " +
+                "(3) LIGHTING: direction, quality (hard/soft/dramatic), color temperature, special effects; " +
+                "(4) BACKGROUND: what is behind the subject, depth, environment, colors; " +
+                "(5) COLOR PALETTE: dominant hues and overall mood. " +
+                "Be extremely precise — another AI must recreate this from your words alone. " +
+                "Output ONLY the description paragraph, no preamble or labels."
             );
             $btnLabel.textContent = 'Step 2/2 — Rendering…';
             setStatus('Step 2/2 — Rendering styled image via Pollinations…', 'active');
-            fullPrompt = `${description} Style: ${stylePrompt}. Masterpiece, highly detailed, professional quality.`;
+            fullPrompt = `A single portrait-centered image. ${description} Now render this SAME subject, SAME pose, SAME framing, SAME composition, SAME camera angle transformed into the following art style: ${stylePrompt}. Keep the subject's face, features, and composition identical to the original. Masterpiece, highly detailed, professional quality.`;
         } else {
-            // ── Direct path: style prompt only (no Groq key needed) ─
-            setStatus('Rendering styled image via Pollinations…', 'active');
-            fullPrompt = `${stylePrompt}. Masterpiece, highly detailed, professional quality.`;
+            // No Groq key — generate purely from style prompt
+            // Results will be generic (not grounded in the uploaded image)
+            setStatus('Rendering via Pollinations (add Groq key for image-matched results)…', 'active');
+            fullPrompt = `${stylePrompt}. Ultra-detailed, masterpiece quality.`;
         }
 
         // ── Pollinations text-to-image ────────────────────────────
