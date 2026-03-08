@@ -546,7 +546,7 @@
                     <span style="font-size:14px;">✦</span>
                     <span>Pollinations.ai — <span style="color:var(--muted)">free · no key · no CORS</span></span>
                 </div>
-                <p class="hint">Only your Groq key is needed. Keys stored in browser only.</p>
+                <p class="hint">Groq key is optional — only needed for Magic Prompt. Keys stored in browser only.</p>
             </div>
         </div>
 
@@ -580,7 +580,7 @@
                 </button>
             </div>
             <div id="coldBanner">
-                ⚡ Step 1 — Groq Vision analyzes your image. Step 2 — Pollinations renders the styled result. Usually takes <b>10–25 seconds</b> total.
+                ⚡ Rendering via Pollinations.ai. If a Groq key is provided, your image is analyzed first for a richer result. Usually <b>10–25 seconds</b>.
             </div>
         </div>
 
@@ -773,8 +773,10 @@ function validate() {
     const isCustom = $styleSelect.value === 'custom';
     const hasStyle = $styleSelect.value !== '' && (!isCustom || $customPrompt.value.trim().length > 3);
 
-    $magicBtn.disabled   = !(hasGroq && hasImage);
-    $generateBtn.disabled = !(hasGroq && hasImage && hasStyle);
+    // Magic Prompt requires Groq Vision to read the image
+    $magicBtn.disabled    = !(hasGroq && hasImage);
+    // Generate only needs image + style — Groq is optional
+    $generateBtn.disabled = !(hasImage && hasStyle);
 }
 
 // ── Status Log Helper ──────────────────────────────────────────
@@ -862,26 +864,35 @@ $generateBtn.addEventListener('click', async () => {
     const stylePrompt = isCustom ? $customPrompt.value.trim() : $styleSelect.value;
 
     $generateBtn.disabled = true;
-    $btnLabel.textContent = 'Step 1/2 — Analyzing…';
+    $btnLabel.textContent = 'Generating…';
     $btnSpinner.style.display = 'block';
     $coldBanner.style.display = 'block';
     transformedUrl = null;
 
     try {
-        // ── Step 1: Groq Vision describes the image content ──────
-        setStatus('Step 1/2 — Groq Vision analyzing your image…', 'active');
-        const description = await groqDescribeImage(
-            "Describe this image precisely in 2–3 sentences. Cover: the main subject(s), " +
-            "setting or background, lighting, dominant colors, and composition. " +
-            "Be specific and visual. Output ONLY the description."
-        );
+        let fullPrompt;
 
-        // ── Step 2: Pollinations text-to-image ───────────────────
-        $btnLabel.textContent = 'Step 2/2 — Rendering…';
-        setStatus('Step 2/2 — Rendering styled image via Pollinations…', 'active');
+        if ($groqKey.value.trim().length > 10) {
+            // ── Groq Vision path: richer, image-aware prompt ─────
+            // Used when a Groq key is provided (optional for preset styles)
+            $btnLabel.textContent = 'Step 1/2 — Analyzing…';
+            setStatus('Step 1/2 — Groq Vision analyzing your image…', 'active');
+            const description = await groqDescribeImage(
+                "Describe this image precisely in 2–3 sentences. Cover: the main subject(s), " +
+                "setting or background, lighting, dominant colors, and composition. " +
+                "Be specific and visual. Output ONLY the description."
+            );
+            $btnLabel.textContent = 'Step 2/2 — Rendering…';
+            setStatus('Step 2/2 — Rendering styled image via Pollinations…', 'active');
+            fullPrompt = `${description} Style: ${stylePrompt}. Masterpiece, highly detailed, professional quality.`;
+        } else {
+            // ── Direct path: style prompt only (no Groq key needed) ─
+            setStatus('Rendering styled image via Pollinations…', 'active');
+            fullPrompt = `${stylePrompt}. Masterpiece, highly detailed, professional quality.`;
+        }
 
-        // Build a rich combined prompt
-        const fullPrompt = `${description} Style: ${stylePrompt}. Masterpiece, highly detailed, professional quality.`;
+        // ── Pollinations text-to-image ────────────────────────────
+        // (same for both paths)
 
         // Pollinations returns the image directly at this URL — no fetch needed,
         // just set it as <img src>. seed= forces a fresh generation each time.
@@ -928,7 +939,9 @@ function showResult(src) {
 $sliderRange.addEventListener('input', e => updateSlider(e.target.value));
 
 function updateSlider(val) {
-    $imgOriginal.style.clipPath = `inset(0 0 0 ${val}%)`;
+    // Clip the TRANSFORMED image (top layer) from the left edge
+    // revealing the original underneath — correct slider direction
+    $imgTransformed.style.clipPath = `inset(0 0 0 ${val}%)`;
     $dividerLine.style.left     = val + '%';
     $dividerHandle.style.left   = val + '%';
 }
